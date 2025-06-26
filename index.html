@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Git & GitHub Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Stone, Muted Blue) -->
+    <!-- Application Structure Plan: The SPA uses a guided, step-by-step interactive lab format. The main layout features a vertical stepper on the left to navigate through the lab sections, and a main content area on the right. This content area displays detailed instructions for the current step and, crucially, an animated diagram that visualizes the state of the Git repository (Working Directory, Staging, Local Repo, Remote Repo) in real-time as the user progresses. This structure was chosen to transform the static, text-based tutorial into an engaging, hands-on learning experience. The step-by-step navigation prevents beginners from feeling overwhelmed, while the live visualization provides immediate, concrete feedback on what abstract Git commands are actually doing, reinforcing learning and understanding far more effectively than text alone. -->
+    <!-- Visualization & Content Choices: 
+        - Intro (Git vs. GitHub): Goal: Inform. Method: Side-by-side cards with icons. Justification: Simple, clear visual separation of concepts. Library: HTML/CSS.
+        - Lab Steps: Goal: Guide. Method: Interactive vertical stepper. Interaction: Clicking a step displays its content. Justification: Organizes the linear flow of the lab and provides a sense of progress. Library: HTML/CSS/JS.
+        - Code Snippets: Goal: Inform/Instruct. Method: <pre><code> blocks with a copy button. Interaction: Click to copy command. Justification: Reduces transcription errors for students and improves usability. Library: JS for clipboard interaction.
+        - Git State Diagram: Goal: Relate/Visualize. Method: Custom diagram built with 4 columns (HTML/CSS divs). Interaction: The diagram dynamically updates as the user completes each lab step, animating the movement of "files" and "commits" between states. Justification: This is the core interactive element that makes the abstract Git workflow tangible. Library: Custom JS DOM manipulation. No Chart.js/Plotly.js needed as there is no quantitative data; the primary visualization is this custom-built interactive diagram.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .command {
+            position: relative;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #334155;
+            color: #cbd5e1;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #475569; }
+        .step.active .step-circle { background-color: #3b82f6; border-color: #3b82f6; }
+        .step.active .step-title { color: #3b82f6; font-weight: 600; }
+        .step.completed .step-circle { background-color: #22c55e; border-color: #22c55e; color: white; }
+        .step.completed .step-title { color: #166534; }
+        .step.completed .step-line { background-color: #22c55e; }
+        .git-file, .git-commit {
+            transition: all 0.5s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Interactive Git & GitHub Lab</h1>
+            <p class="mt-4 text-lg text-stone-600">An engaging, hands-on guide for high school students.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Stepper Navigation -->
+            <aside class="lg:col-span-3">
+                <div id="stepper" class="sticky top-8 bg-white p-6 rounded-xl shadow-sm">
+                    <!-- Stepper items will be injected here by JS -->
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-9">
+                <div id="content-panel" class="bg-white p-6 md:p-8 rounded-xl shadow-sm min-h-[80vh]">
+                    <!-- Step content will be injected here -->
+                </div>
+                 <!-- Visualization Panel -->
+                <div id="visualization-panel" class="mt-8 bg-white p-6 md:p-8 rounded-xl shadow-sm">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-stone-800">Git Repository State</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2">💻 Working Directory</h4>
+                            <div id="working-dir" class="min-h-[100px] space-y-2 p-2 bg-white rounded"></div>
+                        </div>
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2">📥 Staging Area</h4>
+                            <div id="staging-area" class="min-h-[100px] space-y-2 p-2 bg-white rounded"></div>
+                        </div>
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2">🗄️ Local Repository</h4>
+                            <div id="local-repo" class="min-h-[100px] space-y-2 p-2 bg-white rounded"></div>
+                        </div>
+                        <div class="bg-stone-100 p-4 rounded-lg">
+                            <h4 class="font-semibold mb-2">☁️ Remote (GitHub)</h4>
+                            <div id="remote-repo" class="min-h-[100px] space-y-2 p-2 bg-white rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+const steps = [
+    {
+        title: "Introduction",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Welcome to the Lab!</h2>
+            <p class="text-lg mb-6">In this guide, you will learn the basics of Git and GitHub, two essential tools for developers.</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="border border-stone-200 p-6 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">What is Git? 🤔</h3>
+                    <p>Git is a <strong>version control system</strong>. Think of it like a super-smart "save" button for your projects. It runs on your computer and helps you keep track of every change you make to your files. You can see who changed what, when, and even go back to an earlier version if you make a mistake.</p>
+                </div>
+                <div class="border border-stone-200 p-6 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">What is GitHub? ☁️</h3>
+                    <p>GitHub is a <strong>web-based platform</strong> that hosts Git repositories. It's like a cloud storage service specifically for your Git projects. It allows you to store your code online, share it, and collaborate with others easily.</p>
+                </div>
+            </div>
+        `
+    },
+    {
+        title: "Create GitHub Repo",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 1: Create a GitHub Repository</h2>
+            <p class="mb-4">First, let's create an empty space on GitHub for our project.</p>
+            <ol class="list-decimal list-inside space-y-3">
+                <li>Open your web browser and go to <a href="https://github.com" target="_blank" class="text-blue-600 hover:underline">github.com</a> and log in.</li>
+                <li>On the homepage, click the green <strong>"New"</strong> button.</li>
+                <li>On the "Create a new repository" page, fill in the details:
+                    <ul class="list-disc list-inside ml-6 mt-2 bg-stone-50 p-4 rounded-md">
+                        <li><strong>Repository name:</strong> <code class="bg-stone-200 px-1 rounded">helloworld</code></li>
+                        <li><strong>Description (Optional):</strong> "My first Git and GitHub lab!"</li>
+                        <li><strong>Public/Private:</strong> Select <strong>Public</strong>.</li>
+                        <li><strong>IMPORTANT:</strong> Leave all checkboxes for "Add a README file", ".gitignore", and "license" <strong>unchecked</strong>. We want an empty repository.</li>
+                    </ul>
+                </li>
+                <li>Click the green <strong>"Create repository"</strong> button. Keep this page open!</li>
+            </ol>
+        `
+    },
+    {
+        title: "Clone & Configure",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 2: Clone & Configure</h2>
+            <p class="mb-4">Now, let's bring the empty repository to your computer and set up Git.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">1. Navigate to C:\\GIT</h3>
+            <p>Open Command Prompt (CMD) and type this command. The <code>C:\\GIT</code> folder is pre-created for you.</p>
+            <div class="command">cd C:\\GIT<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <h3 class="text-xl font-semibold mb-2 mt-4">2. Clone the Repository</h3>
+            <p>On your GitHub repo page, click the green "Code" button, select HTTPS, and copy the URL. Then run the command below, pasting your URL.</p>
+            <div class="command">git clone https://github.com/YourUsername/helloworld.git<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-4">Now move into your new project folder:</p>
+            <div class="command">cd helloworld<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+             <h3 class="text-xl font-semibold mb-2 mt-4">3. Set Your Git Identity</h3>
+            <p>Tell Git who you are. This is a one-time setup on a new machine.</p>
+            <div class="command">git config --global user.name "Your Name"<br>git config --global user.email "your_fake_email@example.com"<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+        `
+    },
+    {
+        title: "Add Version 1",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 3: Add Version 1</h2>
+            <p class="mb-4">Let's add your first file to the repository. First, copy <code>C:\\SOFTWARE\\HelloWorld\\Version1\\index.html</code> into your <code>C:\\GIT\\helloworld</code> folder.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">1. Check Status</h3>
+            <p>See what Git thinks about your repository.</p>
+            <div class="command">git status<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">You'll see <code>index.html</code> as an "untracked file".</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">2. Stage the File</h3>
+            <p>Tell Git to start tracking this new file.</p>
+            <div class="command">git add index.html<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <h3 class="text-xl font-semibold mb-2 mt-4">3. Commit the File</h3>
+            <p>Save a snapshot of your staged changes with a descriptive message.</p>
+            <div class="command">git commit -m "Add initial version of index.html (Version 1)"<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <h3 class="text-xl font-semibold mb-2 mt-4">4. Push to GitHub</h3>
+            <p>Send your local commit up to your remote repository on GitHub.</p>
+            <div class="command">git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Now refresh your GitHub page to see the file!</p>
+        `
+    },
+    {
+        title: "Update to Version 2",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 4: Update to Version 2</h2>
+            <p class="mb-4">Let's update the file. Copy <code>Version2\\index.html</code> from <code>C:\\SOFTWARE\\HelloWorld</code> and overwrite the existing file in your project folder.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">1. Check Status</h3>
+            <p>Git will notice the file has changed.</p>
+            <div class="command">git status<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <h3 class="text-xl font-semibold mb-2 mt-4">2. Stage, Commit, and Push</h3>
+            <p>Combine the steps to update the file on GitHub.</p>
+            <div class="command">git add index.html<br>git commit -m "Update index.html to Version 2"<br>git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Check GitHub. You should see the updated content and a new commit.</p>
+        `
+    },
+    {
+        title: "Revert to Previous",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 5: Revert to the Previous Commit</h2>
+            <p class="mb-4">Made a mistake? Let's go back to Version 1. Git's <code>revert</code> command creates a *new* commit that undoes a previous one.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">1. View Commit History</h3>
+            <p>Find the unique ID (hash) of the commit you want to undo.</p>
+            <div class="command">git log --oneline<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Copy the 7-character hash of the "Update index.html to Version 2" commit (it will be the top one).</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">2. Revert The Commit</h3>
+            <p>Replace <code>abcdef1</code> with the hash you just copied.</p>
+            <div class="command">git revert abcdef1<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">A text editor might open for the commit message. Just save and close it.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">3. Push the Revert</h3>
+            <p>Push the new "revert" commit to GitHub.</p>
+            <div class="command">git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Refresh GitHub. Your <code>index.html</code> is now back to Version 1!</p>
+        `
+    },
+    {
+        title: "Update to Version 3",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 6: Update to Version 3</h2>
+            <p class="mb-4">Let's move forward again. Copy <code>Version3\\index.html</code> from <code>C:\\SOFTWARE\\HelloWorld</code> and overwrite the file in your project.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">Stage, Commit, and Push</h3>
+            <div class="command">git add index.html<br>git commit -m "Update index.html to Version 3"<br>git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Verify the changes on GitHub.</p>
+        `
+    },
+    {
+        title: "Update to Version 4",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 7: Update to Version 4</h2>
+            <p class="mb-4">One more update for the index file. Copy <code>Version4\\index.html</code> and overwrite the file in your project.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">Stage, Commit, and Push</h3>
+            <div class="command">git add index.html<br>git commit -m "Update index.html to Version 4"<br>git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Verify the changes on GitHub.</p>
+        `
+    },
+    {
+        title: "Add Image File",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">Step 8: Add a New Image File</h2>
+            <p class="mb-4">Finally, let's add a new file. Copy <code>red-mullet-recipe1.png</code> from <code>C:\\SOFTWARE\\HelloWorld\\Version4</code> into your project folder.</p>
+            <h3 class="text-xl font-semibold mb-2 mt-4">Stage, Commit, and Push the New File</h3>
+            <div class="command">git add red-mullet-recipe1.png<br>git commit -m "Add red-mullet-recipe1.png"<br>git push origin main<button class="copy-btn" onclick="copyCommand(this)">Copy</button></div>
+            <p class="mt-2 text-sm text-stone-600">Check GitHub. You should now see both files in your repository!</p>
+        `
+    },
+    {
+        title: "Conclusion",
+        content: `
+            <h2 class="text-3xl font-bold mb-4">🎉 Congratulations! 🎉</h2>
+            <p class="text-lg mb-6">You have successfully completed this lab. You now have a foundational understanding of how Git and GitHub help developers manage and collaborate on projects.</p>
+            <h3 class="text-2xl font-semibold mb-3">You've learned how to:</h3>
+            <ul class="list-disc list-inside space-y-2 bg-stone-50 p-6 rounded-md">
+                <li>Create a GitHub repository.</li>
+                <li>Clone a repository to your local machine.</li>
+                <li>Stage and commit changes to files.</li>
+                <li>Push your local changes to GitHub.</li>
+                <li>Revert to a previous version of your project.</li>
+                <li>Add new files to your repository.</li>
+            </ul>
+            <p class="mt-6 text-lg">Keep practicing, and explore more Git commands as you become more comfortable!</p>
+        `
+    }
+];
+
+let currentState = {
+    step: 0,
+    completed: []
+};
+
+const stepperEl = document.getElementById('stepper');
+const contentEl = document.getElementById('content-panel');
+const viz = {
+    working: document.getElementById('working-dir'),
+    staging: document.getElementById('staging-area'),
+    local: document.getElementById('local-repo'),
+    remote: document.getElementById('remote-repo')
+};
+
+function renderStepper() {
+    stepperEl.innerHTML = steps.map((step, index) => `
+        <div id="step-${index}" class="step flex items-start mb-4 cursor-pointer" onclick="goToStep(${index})">
+            <div class="step-circle flex-shrink-0 w-8 h-8 rounded-full border-2 border-stone-300 flex items-center justify-center mr-4 transition-colors">
+                ${currentState.completed.includes(index) ? '✔' : index + 1}
+            </div>
+            <div class="flex-grow">
+                <h4 class="step-title font-medium text-stone-600 transition-colors">${step.title}</h4>
+                ${index < steps.length - 1 ? '<div class="step-line h-4 border-l-2 border-stone-300 ml-4 mt-1 transition-colors"></div>' : ''}
+            </div>
+        </div>
+    `).join('');
+    updateStepperActive();
+}
+
+function updateStepperActive() {
+    document.querySelectorAll('.step').forEach((el, index) => {
+        el.classList.remove('active', 'completed');
+        if (index === currentState.step) {
+            el.classList.add('active');
+        }
+        if (currentState.completed.includes(index)) {
+            el.classList.add('completed');
+        }
+    });
+}
+
+function renderContent() {
+    const stepData = steps[currentState.step];
+    contentEl.innerHTML = `
+        ${stepData.content}
+        <div class="flex justify-between mt-8">
+            <button class="bg-stone-500 text-white px-6 py-2 rounded-lg hover:bg-stone-600 disabled:bg-stone-300" 
+                    onclick="prevStep()" ${currentState.step === 0 ? 'disabled' : ''}>
+                Previous
+            </button>
+            <button class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:bg-stone-300" 
+                    onclick="nextStep()">
+                ${currentState.step === steps.length - 1 ? 'Finish Lab' : 'Next Step'}
+            </button>
+        </div>
+    `;
+    updateStepperActive();
+    renderVisualization();
+}
+
+function renderVisualization() {
+    Object.values(viz).forEach(el => el.innerHTML = '');
+    
+    const createFile = (name, version = '') => {
+        const el = document.createElement('div');
+        el.className = 'git-file bg-blue-100 text-blue-800 p-2 rounded text-sm';
+        el.textContent = `${name} ${version ? '('+version+')' : ''}`;
+        return el;
+    };
+    
+    const createCommit = (hash, msg) => {
+        const el = document.createElement('div');
+        el.className = 'git-commit bg-green-100 text-green-800 p-2 rounded text-sm';
+        el.innerHTML = `<span class="font-mono text-xs bg-green-200 px-1 rounded">${hash}</span> ${msg}`;
+        return el;
+    };
+    
+    setTimeout(() => {
+        let v1_commit, v2_commit, revert_commit, v3_commit, v4_commit, img_commit;
+
+        if (currentState.step >= 3) {
+            viz.working.appendChild(createFile('index.html', 'v1'));
+        }
+        if (currentState.step >= 3) { // After 'git add'
+            viz.staging.appendChild(createFile('index.html', 'v1'));
+        }
+        if (currentState.step >= 3) { // After 'git commit'
+            v1_commit = createCommit('1234567', 'Add v1');
+            viz.local.appendChild(v1_commit);
+        }
+        if (currentState.step >= 3) { // After 'git push'
+             viz.remote.appendChild(createCommit('1234567', 'Add v1'));
+        }
+
+        if(currentState.step >= 4) {
+            viz.working.innerHTML = '';
+            viz.working.appendChild(createFile('index.html', 'v2'));
+            viz.staging.innerHTML = '';
+            viz.staging.appendChild(createFile('index.html', 'v2'));
+            
+            v2_commit = createCommit('abcdef1', 'Update to v2');
+            viz.local.appendChild(v2_commit);
+            viz.remote.appendChild(v2_commit.cloneNode(true));
+        }
+
+        if(currentState.step >= 5) {
+            viz.working.innerHTML = '';
+            viz.working.appendChild(createFile('index.html', 'v1'));
+            viz.staging.innerHTML = '';
+
+            revert_commit = createCommit('fedcba9', 'Revert to v1');
+            viz.local.appendChild(revert_commit);
+            viz.remote.appendChild(revert_commit.cloneNode(true));
+        }
+        
+        if(currentState.step >= 6) {
+            viz.working.innerHTML = '';
+            viz.working.appendChild(createFile('index.html', 'v3'));
+            viz.staging.innerHTML = '';
+            viz.staging.appendChild(createFile('index.html', 'v3'));
+
+            v3_commit = createCommit('bcde123', 'Update to v3');
+            viz.local.appendChild(v3_commit);
+            viz.remote.appendChild(v3_commit.cloneNode(true));
+        }
+        
+        if(currentState.step >= 7) {
+            viz.working.innerHTML = '';
+            viz.working.appendChild(createFile('index.html', 'v4'));
+            viz.staging.innerHTML = '';
+            viz.staging.appendChild(createFile('index.html', 'v4'));
+
+            v4_commit = createCommit('cde1234', 'Update to v4');
+            viz.local.appendChild(v4_commit);
+            viz.remote.appendChild(v4_commit.cloneNode(true));
+        }
+        
+        if(currentState.step >= 8) {
+            viz.working.appendChild(createFile('red-mullet-recipe1.png'));
+            viz.staging.appendChild(createFile('red-mullet-recipe1.png'));
+            
+            img_commit = createCommit('de12345', 'Add image');
+            viz.local.appendChild(img_commit);
+            viz.remote.appendChild(img_commit.cloneNode(true));
+        }
+        
+        document.querySelectorAll('.git-file, .git-commit').forEach(el => el.classList.add('fade-in'));
+    }, 100);
+}
+
+
+function goToStep(stepIndex) {
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+        currentState.step = stepIndex;
+        renderContent();
+    }
+}
+
+function prevStep() {
+    goToStep(currentState.step - 1);
+}
+
+function nextStep() {
+    if (!currentState.completed.includes(currentState.step)) {
+        currentState.completed.push(currentState.step);
+    }
+    if (currentState.step < steps.length - 1) {
+        goToStep(currentState.step + 1);
+    } else {
+        goToStep(currentState.step);
+    }
+}
+
+function copyCommand(button) {
+    const commandText = button.parentNode.innerText.replace('Copy', '').trim();
+    navigator.clipboard.writeText(commandText).then(() => {
+        button.innerText = 'Copied!';
+        setTimeout(() => {
+            button.innerText = 'Copy';
+        }, 2000);
+    });
+}
+
+
+// Initial Render
+renderStepper();
+renderContent();
+
+</script>
+</body>
+</html>
