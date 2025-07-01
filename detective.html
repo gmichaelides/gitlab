@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Detective: Unmasking Phishing Scams</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: A thematic, single-page educational module. The structure follows the logical flow of the source report: 1. Introduction, 2. Identifying Red Flags, 3. Interactive Case File Analysis, 4. Prevention, 5. Reporting. This step-by-step approach is ideal for a learning experience. A top navigation bar allows users to jump between sections, but the primary flow is scrolling. The key interaction is the "Case Files" section, where users actively apply knowledge from the "Red Flags" section and receive immediate feedback, which is a highly effective method for reinforcing educational content. This structure was chosen to turn a passive document into an active learning tool. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Phishing Definition -> Goal: Inform -> Presentation: Formatted text block -> Justification: Clear, direct explanation for foundational knowledge.
+        - Report Info: Red Flags list -> Goal: Organize/Inform -> Presentation: Interactive cards with icons -> Interaction: Click-to-reveal details -> Justification: Breaks down a list into digestible, visually separated concepts, encouraging exploration.
+        - Report Info: Case Scenarios -> Goal: Compare/Analyze -> Presentation: Interactive "Case File" modal with checklist -> Interaction: User selects checkboxes, clicks "Reveal Analysis" for instant feedback -> Justification: The core learning activity. Transforms passive reading into active analysis, directly testing comprehension of the red flags.
+        - Report Info: Prevention/Reporting Steps -> Goal: Inform -> Presentation: Styled lists with icons -> Justification: Presents actionable advice in a clear, easy-to-scan format.
+        - All visualizations use HTML/CSS/Tailwind and are powered by Vanilla JS. No Chart.js needed as there is no quantitative data. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap');
+        .font-mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+        .bg-pattern {
+            background-color: #f8f9fa;
+            background-image: radial-gradient(#ced4da 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        .card-flip {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.5rem;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        .case-file-content {
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        .highlight-red {
+            background-color: rgba(255, 0, 0, 0.2);
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+        .highlight-green {
+            background-color: rgba(0, 255, 0, 0.2);
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+        .feedback-icon {
+            font-style: normal;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-gray-900">🕵️ Digital Detective</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#mission" class="text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">The Mission</a>
+                        <a href="#red-flags" class="text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Red Flags</a>
+                        <a href="#case-files" class="text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Case Files</a>
+                        <a href="#defense" class="text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Self-Defense</a>
+                        <a href="#advocate" class="text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Be an Advocate</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: The Mission -->
+        <section id="mission" class="text-center mb-16 md:mb-24">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Unmask the Phishing Scams</h1>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">This experience will turn you into a digital detective. You will learn to identify and protect yourself from phishing — fraudulent attempts to steal your personal information. Your mission is to understand the threat, spot the clues, and learn the defenses.</p>
+        </section>
+
+        <!-- Section 2: Red Flags -->
+        <section id="red-flags" class="mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Know The Red Flags</h2>
+                <p class="mt-2 text-md text-gray-600">Phishing scams have common giveaways. This section teaches you what to look for. Click on any card to learn more about a specific red flag.</p>
+            </div>
+            <div id="red-flags-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Red Flag Cards will be injected here by JS -->
+            </div>
+        </section>
+
+        <!-- Section 3: Case Files -->
+        <section id="case-files" class="mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Analyze the Case Files</h2>
+                <p class="mt-2 text-md text-gray-600">Time to test your skills, detective. Choose a case file, examine the evidence for red flags, and see if you can crack the case. This is where you apply what you've learned to see if you can correctly identify a phishing attempt.</p>
+            </div>
+            <div id="case-files-container" class="flex justify-center flex-wrap gap-6">
+                 <!-- Case File buttons will be injected here -->
+            </div>
+        </section>
+
+        <!-- Section 4: Digital Self-Defense -->
+        <section id="defense" class="mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900">Digital Self-Defense</h2>
+                <p class="mt-2 text-md text-gray-600">Knowing the flags is half the battle. This section outlines the essential habits and tools you should use to build a strong defense against phishing and other online threats.</p>
+            </div>
+            <div id="defense-grid" class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                <!-- Defense strategies will be injected here -->
+            </div>
+        </section>
+
+        <!-- Section 5: Be an Advocate -->
+        <section id="advocate" class="bg-gray-100 rounded-lg p-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900">Be an Advocate for Security</h2>
+                <p class="mt-2 text-md text-gray-600">Protecting the digital world is a team effort. When you spot a scam, reporting it helps protect others. This section explains how to report phishing attempts and share your knowledge.</p>
+            </div>
+            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-lg mb-2">How to Report Phishing</h3>
+                    <ul class="space-y-2 text-gray-600 list-disc list-inside">
+                        <li><strong>For Emails:</strong> Most email clients (like Gmail or Outlook) have a "Report Phishing" or "Report Spam" option. Use it! This helps them block similar messages in the future.</li>
+                        <li><strong>For Websites:</strong> If a link leads to a phishing website, you can report it to Google Safe Browse and the Anti-Phishing Working Group (APWG).</li>
+                        <li><strong>For Text Messages:</strong> Forward the suspicious text message to the number 7726 (SPAM). This works for most major carriers.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="font-bold text-lg mb-2">Top 2 Tips for Friends & Family</h3>
+                    <p class="text-gray-600 mb-4">When explaining phishing, keep it simple and actionable:</p>
+                    <ol class="space-y-2 text-gray-600 list-decimal list-inside">
+                        <li><strong>"Think Before You Click."</strong> Always hover over links to see the real destination. If a message seems urgent or too good to be true, pause and verify it through a different, official channel (e.g., by visiting the official website directly).</li>
+                        <li><strong>"Never Give Out Info from an Unsolicited Message."</strong> Legitimate companies will almost never ask for your password, credit card number, or other sensitive details via email or text. If they do, it's a major red flag.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Case File Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-2xl case-file-content">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const redFlagsData = [
+        { id: 'sender', title: 'Suspicious Sender Address', icon: '✉️', description: 'The sender\'s email address looks odd. It might be misspelled (like "micros0ft"), have a strange domain, or not match the company it claims to be from.' },
+        { id: 'urgency', title: 'Urgency or Threats', icon: '⏰', description: 'The message creates a sense of panic, threatening to close your account or demanding immediate action. Scammers use this to make you act without thinking.' },
+        { id: 'grammar', title: 'Spelling & Grammar Errors', icon: '✍️', description: 'Professional companies usually proofread their emails. Obvious spelling or grammar mistakes are a big red flag.' },
+        { id: 'links', title: 'Suspicious Links or Attachments', icon: '🔗', description: 'Hover over links before clicking! The destination URL might be different from the link text or go to an unrelated, strange-looking website.' },
+        { id: 'personalInfo', title: 'Requests for Personal Info', icon: '🤫', description: 'Legitimate companies rarely ask for passwords, credit card numbers, or other sensitive data via email. Be very suspicious of any such request.' },
+        { id: 'generic', title: 'Generic Greetings', icon: '👤', description: 'Phishing emails often use generic greetings like "Dear Valued Customer" instead of your actual name, as they are sent to thousands of people at once.' }
+    ];
+
+    const caseFilesData = [
+        {
+            id: 'case-a',
+            title: 'Case A: The "Urgent Account Update"',
+            scenario: {
+                sender: 'support@micros0ft-updates.com',
+                subject: 'URGENT: Your Microsoft Account Will Be Suspended!',
+                body: 'Dear valued customer, We have detected unusual activity on your account. To prevent suspension, please click here immediately to verify your details. Failure to do so will result in permanent account closure within 24 hours. Click this link: http://bit.ly/verify-account-now'
+            },
+            redFlags: ['sender', 'urgency', 'generic', 'links'],
+            analysis: {
+                sender: 'The sender address uses a zero ("0") instead of an "o" in "microsoft", a common trick.',
+                urgency: 'The subject and body use threats of account suspension and a 24-hour deadline to create panic.',
+                generic: 'It uses a generic greeting, "Dear valued customer," instead of a real name.',
+                links: 'The link is a shortened URL (bit.ly), hiding the true, likely malicious, destination.'
+            }
+        },
+        {
+            id: 'case-b',
+            title: 'Case B: The "Prize Notification"',
+             scenario: {
+                sender: 'Unknown Number (+1-555-123-4567)',
+                subject: 'Text Message',
+                body: "Congratulations! You've won a $1000 gift card from [Popular Retailer Name]! To claim your prize, reply 'CLAIM' with your full name, address, and credit card number for verification. This offer expires in 30 minutes!"
+            },
+            redFlags: ['urgency', 'personalInfo'],
+            analysis: {
+                urgency: 'An expiring offer ("expires in 30 minutes!") pressures you to act quickly.',
+                personalInfo: 'It asks for highly sensitive information, including a credit card number, directly in a text message, which is extremely unsafe and unprofessional.'
+            }
+        },
+        {
+            id: 'case-c',
+            title: 'Case C: The "Shipping Notification"',
+             scenario: {
+                sender: 'shipping@amazon-delivery.co',
+                subject: 'Your Amazon Order #7890123 is delayed',
+                body: 'Hello, Your recent order is experiencing a delay. To track your package and resolve the issue, please click the link below: https://track-my-order.xyz/status?id=7890123 We apologize for the inconvenience.'
+            },
+            redFlags: ['sender', 'links'],
+            analysis: {
+                sender: 'The domain is "amazon-delivery.co", not the official "amazon.com". The ".co" is a subtle but critical red flag.',
+                links: 'The link goes to "track-my-order.xyz", which is not an official Amazon domain. Scammers often register similarly named websites on obscure domains like ".xyz".'
+            }
+        }
+    ];
+    
+    const defenseData = [
+        { icon: '🔐', title: 'Use Strong, Unique Passwords', description: 'Don\'t reuse passwords across different sites. Use a password manager to create and store complex passwords for you.' },
+        { icon: '🛡️', title: 'Enable Two-Factor Authentication (2FA)', description: '2FA adds a second layer of security, like a code sent to your phone. Even if a scammer steals your password, they can\'t log in without your phone.' },
+        { icon: '🧐', title: 'Be Skeptical of Links and Attachments', description: 'Think before you click. Hover over links to check their destination. Don\'t open attachments from unknown or suspicious senders.' },
+        { icon: '✅', title: 'Verify Requests Independently', description: 'If an email asks you to log in or take action, don\'t use its link. Go to the official website or app directly and check for any notifications there.' }
+    ];
+
+    const redFlagsGrid = document.getElementById('red-flags-grid');
+    redFlagsData.forEach(flag => {
+        const card = document.createElement('div');
+        card.className = 'card-flip h-48 cursor-pointer';
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="card-front bg-white shadow-md hover:shadow-lg transition-shadow p-6 flex flex-col items-center justify-center text-center">
+                    <div class="text-4xl mb-3">${flag.icon}</div>
+                    <h3 class="font-bold text-lg">${flag.title}</h3>
+                </div>
+                <div class="card-back bg-gray-700 text-white shadow-md p-6 flex items-center text-center">
+                    <p class="text-sm">${flag.description}</p>
+                </div>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            card.classList.toggle('is-flipped');
+        });
+        redFlagsGrid.appendChild(card);
+    });
+
+    const caseFilesContainer = document.getElementById('case-files-container');
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modal-content');
+
+    caseFilesData.forEach(caseFile => {
+        const button = document.createElement('button');
+        button.textContent = caseFile.title;
+        button.className = 'bg-gray-800 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors shadow-md';
+        button.addEventListener('click', () => openModal(caseFile));
+        caseFilesContainer.appendChild(button);
+    });
+
+    function openModal(caseFile) {
+        modalContent.innerHTML = `
+            <div class="p-6 md:p-8">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-2xl font-bold">${caseFile.title}</h3>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+                </div>
+                
+                <div id="case-evidence" class="bg-gray-100 rounded-lg p-4 mb-6 border border-gray-200">
+                    <p class="text-sm text-gray-500">From: <span class="font-mono">${caseFile.scenario.sender}</span></p>
+                    <p class="text-sm text-gray-500">Subject: <span class="font-bold">${caseFile.scenario.subject}</span></p>
+                    <hr class="my-2">
+                    <p class="text-gray-700">${caseFile.scenario.body}</p>
+                </div>
+
+                <div class="mb-6">
+                    <h4 class="font-bold mb-3 text-lg">Your Analysis: Which red flags can you spot?</h4>
+                    <div id="checklist" class="space-y-2">
+                        ${redFlagsData.map(flag => `
+                            <label class="flex items-center p-2 rounded-md hover:bg-gray-100 transition-colors">
+                                <input type="checkbox" data-flag-id="${flag.id}" class="h-5 w-5 rounded border-gray-300 text-gray-700 focus:ring-gray-600">
+                                <span class="ml-3 text-gray-700">${flag.title}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <button id="reveal-analysis" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors">Reveal Analysis</button>
+
+                <div id="analysis-results" class="mt-6 hidden">
+                    <h4 class="font-bold mb-3 text-lg">Expert Analysis:</h4>
+                    <div id="results-list" class="space-y-3"></div>
+                </div>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+
+        document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('reveal-analysis').addEventListener('click', () => revealAnalysis(caseFile));
+    }
+    
+    function revealAnalysis(caseFile) {
+        const checklist = document.getElementById('checklist');
+        const checkboxes = checklist.querySelectorAll('input[type="checkbox"]');
+        const resultsList = document.getElementById('results-list');
+        resultsList.innerHTML = '';
+        let correctCount = 0;
+        
+        checkboxes.forEach(checkbox => {
+            const flagId = checkbox.dataset.flagId;
+            const isCorrect = caseFile.redFlags.includes(flagId);
+            const isChecked = checkbox.checked;
+            const label = checkbox.parentElement;
+            
+            let resultHTML = '';
+            if (isCorrect) {
+                const feedbackIcon = isChecked ? '<span class="text-green-500 feedback-icon">✔</span> Correct!' : '<span class="text-red-500 feedback-icon">❌</span> Missed!';
+                resultHTML = `<div class="bg-green-50 p-3 rounded-md border border-green-200"><p class="font-bold">${feedbackIcon} ${checkbox.nextElementSibling.textContent}</p><p class="text-sm text-green-800 pl-8">${caseFile.analysis[flagId]}</p></div>`;
+            } else if (isChecked && !isCorrect) {
+                 resultHTML = `<div class="bg-red-50 p-3 rounded-md border border-red-200"><p class="font-bold"><span class="text-red-500 feedback-icon">❌</span> Incorrect. <span class="font-normal">${checkbox.nextElementSibling.textContent}</span> is not a primary red flag in this case.</p></div>`;
+            }
+            
+            if (resultHTML) {
+                resultsList.innerHTML += resultHTML;
+            }
+        });
+        
+        document.getElementById('analysis-results').classList.remove('hidden');
+        document.getElementById('reveal-analysis').disabled = true;
+        document.getElementById('reveal-analysis').textContent = 'Analysis Revealed';
+        document.getElementById('reveal-analysis').classList.add('bg-gray-400', 'cursor-not-allowed');
+        document.getElementById('reveal-analysis').classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+
+    const defenseGrid = document.getElementById('defense-grid');
+    defenseData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-start';
+        div.innerHTML = `
+            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-lg bg-gray-800 text-white text-2xl">
+                <span>${item.icon}</span>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-lg leading-6 font-bold text-gray-900">${item.title}</h4>
+                <p class="mt-1 text-base text-gray-600">${item.description}</p>
+            </div>
+        `;
+        defenseGrid.appendChild(div);
+    });
+
+});
+</script>
+
+</body>
+</html>
